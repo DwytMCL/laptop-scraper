@@ -70,12 +70,12 @@ A file named `top_5_laptops.csv` will appear in your folder.
 
 ## Troubleshooting
 
-**Error: `binary is not a Firefox executable**`
+**Error: `binary is not a Firefox executable`**
 This usually happens on Linux distributions like Arch or Ubuntu Snap installs.
 
 - **Fix:** Ensure you installed the system driver (`sudo pacman -S geckodriver`) and are **not** setting a manual `binary_location` in the script unless necessary.
 
-**Error: `Element not found**`
+**Error: `Element not found`**
 Lazada frequently updates their website layout. If the script fails to find products, the **CSS Selectors** in the code (`div.RfADt`, `span.ooOxS`) may need to be updated to match the new site structure.
 
 ## Disclaimer
@@ -92,4 +92,5 @@ This script is for **educational purposes only**. Scraping data from websites sh
     git commit -m "Added documentation"
     git push
     ```
+
 
