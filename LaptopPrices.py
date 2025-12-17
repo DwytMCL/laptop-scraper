@@ -4,22 +4,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# Note: We removed 'Service' and 'webdriver_manager' imports 
-# because we are using the system-installed geckodriver.
-
 def scrape_laptops():
     options = webdriver.FirefoxOptions()
-    
-    # Run in headless mode to avoid display/GUI errors if you are in a terminal-only session
     options.add_argument("--headless") 
-    
-    # We do NOT set binary_location. 
-    # The system geckodriver knows exactly where the system Firefox is.
-    
+
     print("Connecting to system Firefox...")
-    
     try:
-        # Initialize driver without defining a service (it finds /usr/bin/geckodriver automatically)
         driver = webdriver.Firefox(options=options)
         
         url = "https://www.lazada.com.ph/catalog/?q=laptop"
@@ -29,44 +19,59 @@ def scrape_laptops():
         wait = WebDriverWait(driver, 15)
         print("Waiting for products to load...")
         
-        # Selectors
+        # Get ALL product cards first (we might need to check more than 5 to find 5 valid ones)
         product_cards = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div[data-qa-locator='product-item']")))
 
-        print(f"Found {len(product_cards)} products. Extracting top 5...")
+        print(f"Found {len(product_cards)} total products. Filtering valid listings...")
 
         laptop_data = []
+        
+        # Loop through products until we have 5 valid ones or run out of items
+        for card in product_cards:
+            if len(laptop_data) >= 5:
+                break
 
-        for index, card in enumerate(product_cards[:5]):
             try:
-                title = card.find_element(By.CSS_SELECTOR, "div.RfADt > a").text
-                price = card.find_element(By.CSS_SELECTOR, "span.ooOxS").text
-                link = card.find_element(By.CSS_SELECTOR, "div.RfADt > a").get_attribute("href")
+                # FILTERING LOGIC
+                if "Sold Out" in card.text or "Out of Stock" in card.text:
+                    print("Skipping sold out item...")
+                    continue
+
+                # Extract Data
+                title_element = card.find_element(By.CSS_SELECTOR, "div.RfADt > a")
+                title = title_element.text
+                
+                # Double check: Sometimes price is missing if unlisted
+                try:
+                    price = card.find_element(By.CSS_SELECTOR, "span.ooOxS").text
+                except:
+                    print("Skipping item with no price (likely unlisted)...")
+                    continue
+
+                link = title_element.get_attribute("href")
 
                 laptop_data.append({
-                    "Rank": index + 1,
+                    "Rank": len(laptop_data) + 1,
                     "Model": title,
                     "Price": price,
                     "Link": link
                 })
-                print(f"Scraped #{index+1}: {title[:30]}...")
+                print(f"Scraped #{len(laptop_data)}: {title[:30]}...")
 
             except Exception as e:
-                print(f"Error scraping item {index+1}: {e}")
+                continue
 
+        # Save to Spreadsheet
         if laptop_data:
             df = pd.DataFrame(laptop_data)
             df.to_csv("top_5_laptops.csv", index=False)
             print("\nSUCCESS: Data saved to 'top_5_laptops.csv'")
             print(df)
         else:
-            print("No data extracted.")
+            print("No valid data extracted.")
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        # Diagnostic: If this fails, we know Firefox itself is broken
-        if "binary" in str(e).lower():
-            print("\nCRITICAL: Try running 'firefox --version' in your terminal.")
-            print("If that fails, your Firefox installation is broken.")
 
     finally:
         if 'driver' in locals():
