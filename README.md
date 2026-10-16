@@ -1,96 +1,74 @@
-# Lazada Laptop Price Scraper
+# Lazada Laptop Listing Scraper
 
-A Python automation script that scrapes the top 5 laptop listings from Lazada Philippines and exports the data (Model, Price, Rank, Link) into a CSV spreadsheet.
+A small Python automation project that opens Lazada Philippines in headless Firefox and exports up to five eligible laptop search listings to CSV.
 
-Built with **Selenium** and **Pandas**.
+Built with Selenium for browser automation and pandas for CSV output.
 
-## Features
+## What it does
 
-- **Automated Browsing:** Simulates a real user to bypass basic bot protections.
-- **Headless Mode:** Runs in the background (no visible browser window) for speed.
-- **Data Export:** Automatically saves results to `top_5_laptops.csv`.
-- **Robust Selectors:** Uses specific CSS selectors to target product cards dynamically.
+- Opens the Lazada Philippines search page for `laptop`.
+- Waits up to 15 seconds for product cards to appear.
+- Skips cards containing `Sold Out` or `Out of Stock`, missing prices, or fields it cannot extract.
+- Collects the first five eligible cards in the returned page order.
+- Writes listing titles, displayed prices, links, and extraction order to `top_5_laptops.csv`.
+- Closes Firefox when the run finishes or encounters an error.
 
-## Prerequisites
+`Rank` records extraction order. It does not measure product quality, value, popularity, or sales.
 
-### 1. Python Libraries
+## Requirements
 
-You need Python installed. Install the required libraries using pip:
+- Python 3
+- Mozilla Firefox
+- A compatible GeckoDriver available to Selenium
+- Python packages: `selenium` and `pandas`
 
-```bash
-pip install selenium pandas
-```
+Install Firefox and [GeckoDriver](https://github.com/mozilla/geckodriver/releases) for your operating system, and make the driver available on your `PATH`.
 
-### 2. System Dependencies (Firefox & Geckodriver)
-
-This script requires **Mozilla Firefox** and the **GeckoDriver**.
-
-#### On Arch Linux (Recommended)
-
-Arch Linux handles the driver best via the system package manager:
+## Set up
 
 ```bash
-sudo pacman -S firefox geckodriver
-
+git clone https://github.com/DwytMCL/laptop-scraper.git
+cd laptop-scraper
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install selenium pandas
 ```
 
-#### On Windows / macOS
+On Windows PowerShell, create and activate the environment with:
 
-1. Install Firefox.
-2. Download the [GeckoDriver](https://github.com/mozilla/geckodriver/releases).
-3. Add it to your system PATH (or use `webdriver-manager` in Python).
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install selenium pandas
+```
 
-## Usage
+## Run
 
-1. Clone this repository (or download the script).
-2. Open your terminal in the project folder.
-3. Run the script:
+From the repository directory with the virtual environment active:
 
 ```bash
 python LaptopPrices.py
-
 ```
 
-### Expected Output
+The script prints progress and writes the CSV to the current working directory if it collects at least one listing. An existing file with that name is replaced on a successful export.
 
-The console will show the scraping progress:
+## CSV fields
 
-```text
-Connecting to system Firefox...
-Navigating to [https://www.lazada.com.ph/catalog/?q=laptop](https://www.lazada.com.ph/catalog/?q=laptop)...
-Found 40 products. Extracting top 5...
-Scraped #1: ASUS Vivobook 16...
-Scraped #2: Lenovo ThinkPad...
-...
-SUCCESS: Data saved to 'top_5_laptops.csv'
+| Column | Value |
+| --- | --- |
+| `Rank` | Sequential extraction order, starting at 1 |
+| `Model` | Listing title as displayed on the page |
+| `Price` | Displayed price text, without numeric conversion |
+| `Link` | Product link from the listing |
 
-```
+## Limitations and troubleshooting
 
-A file named `top_5_laptops.csv` will appear in your folder.
+- The script reads one set of loaded search cards; it does not paginate or scroll through additional results.
+- Availability checks rely on listing text. Product identity, stock, and prices are not independently verified.
+- Fewer than five rows can be returned. If no valid rows are found, no CSV is written and an older CSV may remain unchanged.
+- Lazada layout changes can break the product-card, title, or price selectors in `LaptopPrices.py`.
+- Missing listings or a timeout can also result from network failures, access restrictions, or pages that require interaction.
+- For Firefox startup errors, check the browser installation and GeckoDriver compatibility.
+- Dependencies are currently unpinned, and the repository has no automated tests.
 
-## Troubleshooting
-
-**Error: `binary is not a Firefox executable`**
-This usually happens on Linux distributions like Arch or Ubuntu Snap installs.
-
-- **Fix:** Ensure you installed the system driver (`sudo pacman -S geckodriver`) and are **not** setting a manual `binary_location` in the script unless necessary.
-
-**Error: `Element not found`**
-Lazada frequently updates their website layout. If the script fails to find products, the **CSS Selectors** in the code (`div.RfADt`, `span.ooOxS`) may need to be updated to match the new site structure.
-
-## Disclaimer
-
-This script is for **educational purposes only**. Scraping data from websites should be done responsibly and in accordance with the website's `robots.txt` file and Terms of Service. Avoid aggressive scraping that may overload servers.
-
-### **How to add this to your project:**
-1.  Create a new file in your folder called `README.md`.
-2.  Paste the text above into it.
-3.  Save the file.
-4.  Run these commands to push it to GitHub:
-    ```bash
-    git add README.md
-    git commit -m "Added documentation"
-    git push
-    ```
-
-
+Use the script in accordance with Lazada's applicable terms and access rules.
